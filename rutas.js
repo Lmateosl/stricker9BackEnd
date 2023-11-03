@@ -75,7 +75,7 @@ router.post('/codigo', async (req, res) => {
     const { numero } = req.body;
     const codigo = generarCodigo().toString();
 
-    const response = await axios.post('https://graph.facebook.com/v17.0/111392462006335/messages', {
+    const response = await axios.post(`https://graph.facebook.com/v17.0/${process.env.NUMBER_ID_WHA}/messages` , {
       "messaging_product": "whatsapp",
       "recipient_type": "individual",
       "to": numero,
@@ -333,7 +333,7 @@ router.post('/crearReserva', async (req, res) => {
 });
 
 async function enviarMensajeReservaHecha (numero, nombre) {
-  const response = await axios.post('https://graph.facebook.com/v17.0/111392462006335/messages', {
+  const response = await axios.post('https://graph.facebook.com/v17.0/' + process.env.NUMBER_ID_WHA + '/messages', {
     "messaging_product": "whatsapp",
     "recipient_type": "individual",
     "to": numero,
