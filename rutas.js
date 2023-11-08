@@ -3,7 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { initializeApp } = require('firebase/app');
 const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } = require('firebase/auth');
-const { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, addDoc, updateDoc } = require('firebase/firestore');
+const { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, addDoc, updateDoc, deleteDoc } = require('firebase/firestore');
 const axios = require('axios');
 const moment = require('moment-timezone');
 
@@ -312,6 +312,8 @@ router.post('/crearReserva', async (req, res) => {
       idCancha,
       nombre,
       numero,
+      nombreCancha,
+      numeroCancha,
       uid: uid || '',
     };
 
@@ -422,38 +424,35 @@ router.get('/horaGuayaquil', (req, res) => {
 
 });
 
-// Ruta POST para eliminar reservas pasadas
+// Resto de tu código
 router.post('/reservasPasadas', async (req, res) => {
   const token = req.headers.authorization;
-
-  // Verificar y decodificar el token JWT
-  const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
+  const decodedToken =jwt.verify(token, process.env.SECRET_KEY);
 
   try {
-    const idsArray = req.body; // Suponiendo que el array de IDs viene en el cuerpo de la solicitud
+    const idsArray = req.body;
 
-    // Verificar si el array de IDs está presente en la solicitud y no está vacío
     if (!Array.isArray(idsArray) || idsArray.length === 0) {
       return res.status(400).json({ message: 'El array de IDs debe ser proporcionado en la solicitud.' });
     }
 
     // Crear una referencia a la colección 'reservas'
-    const reservasRef = db.collection('reservas');
+    const reservasCollection = collection(db, 'reservas');
 
-    // Obtener todos los documentos cuyas IDs coincidan con los IDs del array
-    const reservasSnapshot = await reservasRef.where('id', 'in', idsArray).get();
+    // Crear una consulta para buscar documentos con IDs en el array
+    const q = query(reservasCollection, where('id', 'in', idsArray));
 
-    // Crear un arreglo de promesas para eliminar los documentos
+    const querySnapshot = await getDocs(q);
+
     const deletePromises = [];
-    reservasSnapshot.forEach((doc) => {
-      const reservaRef = reservasRef.doc(doc.id);
-      deletePromises.push(reservaRef.delete());
+
+    querySnapshot.forEach((doc) => {
+      deletePromises.push(deleteDoc(doc.ref));
     });
 
-    // Esperar a que todas las promesas de eliminación se resuelvan
     await Promise.all(deletePromises);
 
-    return res.status(200).json({ message: 'Reservas pasadas eliminadas.' });
+    return res.status(200).json({ message: 'Reserva eliminada.' });
   } catch (error) {
     console.error('Error al eliminar las reservas pasadas:', error);
     return res.status(500).json({ message: 'Error al eliminar las reservas pasadas.' });
